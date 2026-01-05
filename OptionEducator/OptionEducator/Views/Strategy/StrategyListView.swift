@@ -54,6 +54,14 @@ struct StrategyListView: View {
                     selectedComplexity: $selectedComplexity
                 )
             }
+            .navigationDestination(for: AppCoordinator.Route.self) { route in
+                switch route {
+                case .strategyDetail(let id):
+                    StrategyDetailView(strategyId: id)
+                default:
+                    EmptyView()
+                }
+            }
             .onChange(of: searchText) { _, newValue in
                 applyFilters()
             }
