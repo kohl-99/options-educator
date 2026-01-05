@@ -58,6 +58,14 @@ struct NewsListView: View {
             .refreshable {
                 await newsService.fetchLatestNews()
             }
+            .navigationDestination(for: AppCoordinator.Route.self) { route in
+                switch route {
+                case .newsDetail(let id):
+                    NewsDetailView(newsId: id)
+                default:
+                    EmptyView()
+                }
+            }
         }
     }
 }
