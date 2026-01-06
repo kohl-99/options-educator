@@ -52,9 +52,9 @@ The Options Educator app is an educational iOS application designed to teach use
 ## Project Structure
 
 ```
-OptionsEducator/
+OptionEducator/
 ├── App/
-│   ├── OptionsEducatorApp.swift          # App entry point
+│   ├── OptionEducatorApp.swift          # App entry point
 │   └── AppCoordinator.swift              # Navigation coordinator
 │
 ├── Models/
@@ -166,7 +166,7 @@ OptionsEducator/
     │   ├── ServiceTests/
     │   └── ModelTests/
     └── UITests/
-        └── OptionsEducatorUITests.swift
+        └── OptionEducatorUITests.swift
 ```
 
 ## Core Features Architecture

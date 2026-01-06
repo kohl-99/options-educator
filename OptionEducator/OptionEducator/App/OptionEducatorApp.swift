@@ -5,7 +5,7 @@ import SwiftUI
 /// This app provides comprehensive education on stock options trading strategies,
 /// platform comparisons, real-time market news, and interactive calculators.
 @main
-struct OptionsEducatorApp: App {
+struct OptionEducatorApp: App {
     // MARK: - Properties
     
     /// The app coordinator manages navigation throughout the application

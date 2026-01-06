@@ -26,7 +26,7 @@ The app is built using a modern and scalable architecture, emphasizing separatio
 The project is organized into the following directories:
 
 ```
-OptionsEducator/
+OptionEducator/
 ├── App/         # App entry point & coordinator
 ├── Models/      # Data models (Strategy, Platform, News)
 ├── ViewModels/  # Presentation logic and state management
@@ -95,7 +95,7 @@ To build and run the project:
     ```
 
 2.  **Open in Xcode**:
-    Open the `OptionsEducator.xcodeproj` file in Xcode 14 or later.
+    Open the `OptionEducator.xcodeproj` file in Xcode 14 or later.
 
 3.  **Build and Run**:
     Select a simulator or a connected iOS device and press the "Run" button.
