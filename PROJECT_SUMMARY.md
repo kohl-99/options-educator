@@ -18,7 +18,7 @@ The Options Educator iOS app is a comprehensive educational platform designed to
 
 ### 1. Strategy Library
 
-The application includes a comprehensive library of options trading strategies, organized by category and complexity level. Each strategy includes detailed information about its structure, risk profile, market outlook, and platform availability. The strategies are categorized into seven main types: Bullish, Bearish, Neutral, Volatile, Income, Hedging, and Synthetic.
+The application includes an extensive library of 14+ core options trading strategies, ranging from beginner-friendly covered calls to advanced multi-leg spreads like Iron Condors and Poor Man's Covered Calls. Each strategy includes detailed information about its structure, risk profile, market outlook, and platform availability. The strategies are categorized into seven main types: Bullish, Bearish, Neutral, Volatile, Income, Hedging, and Synthetic.
 
 Users can browse strategies through an intuitive interface that provides filtering by category, complexity level, and market outlook. Each strategy card displays key information including the number of legs, risk level, and which trading platforms support it at various permission levels.
 
@@ -30,7 +30,7 @@ Interactive Brokers offers four permission levels, ranging from basic covered st
 
 ### 3. News & Strategy Integration
 
-The news feed connects real-time financial news to educational trading opportunities. When significant market events occur—such as earnings announcements, FDA approvals, merger news, or economic data releases—the app provides not just the news itself, but also educational context on how options traders might respond.
+The news feed connects real-time financial news to educational trading opportunities through "Classic Case" examples. When significant market events occur—such as NVIDIA earnings, major mergers like Microsoft/Activision, or FDA approvals—the app provides not just the news itself, but also a textbook analysis of how professional options traders respond using specific strategies like Straddles, Iron Condors, or Merger Arbitrage plays.
 
 Each news article includes suggested trading strategies with detailed rationales, timing considerations, risk assessments, and platform availability information. The app also provides historical context, showing how similar events have impacted markets in the past. This feature transforms news consumption from passive reading into active learning about trading opportunities.
 
