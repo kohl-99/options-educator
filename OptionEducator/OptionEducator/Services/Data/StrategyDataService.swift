@@ -261,7 +261,7 @@ final class StrategyDataService: ObservableObject {
             longDescription: "Buying one call and selling another call at a higher strike price. This reduces the cost of the trade but also caps the maximum profit.",
             category: .bullish,
             complexityLevel: 2,
-            marketOutlook: .bullish,
+            marketOutlook: .moderatelyBullish,
             riskProfile: OptionStrategy.RiskProfile(maxLoss: 200, maxProfit: 300, breakeven: [102.00], riskLevel: .moderate, profitProbability: 0.50),
             components: [
                 OptionStrategy.StrategyComponent(optionType: .call, position: .long, strikeRelation: .atTheMoney, quantity: 1, expiration: "30 days"),
@@ -289,7 +289,7 @@ final class StrategyDataService: ObservableObject {
             longDescription: "Buying one put and selling another put at a lower strike price. This reduces the cost of the trade but also caps the maximum profit.",
             category: .bearish,
             complexityLevel: 2,
-            marketOutlook: .bearish,
+            marketOutlook: .moderatelyBearish,
             riskProfile: OptionStrategy.RiskProfile(maxLoss: 200, maxProfit: 300, breakeven: [98.00], riskLevel: .moderate, profitProbability: 0.50),
             components: [
                 OptionStrategy.StrategyComponent(optionType: .put, position: .long, strikeRelation: .atTheMoney, quantity: 1, expiration: "30 days"),
@@ -347,7 +347,7 @@ final class StrategyDataService: ObservableObject {
             longDescription: "Buying a call and a put at the same strike price and expiration. Profits if the stock makes a significant move up or down.",
             category: .volatile,
             complexityLevel: 2,
-            marketOutlook: .volatile,
+            marketOutlook: .highVolatility,
             riskProfile: OptionStrategy.RiskProfile(maxLoss: 500, maxProfit: nil, breakeven: [95.00, 105.00], riskLevel: .high, profitProbability: 0.30),
             components: [
                 OptionStrategy.StrategyComponent(optionType: .call, position: .long, strikeRelation: .atTheMoney, quantity: 1, expiration: "30 days"),
@@ -375,7 +375,7 @@ final class StrategyDataService: ObservableObject {
             longDescription: "Buying an out-of-the-money call and an out-of-the-money put. Profits if the stock makes a very large move in either direction.",
             category: .volatile,
             complexityLevel: 2,
-            marketOutlook: .volatile,
+            marketOutlook: .highVolatility,
             riskProfile: OptionStrategy.RiskProfile(maxLoss: 200, maxProfit: nil, breakeven: [93.00, 107.00], riskLevel: .high, profitProbability: 0.25),
             components: [
                 OptionStrategy.StrategyComponent(optionType: .call, position: .long, strikeRelation: .outOfTheMoney, quantity: 1, expiration: "30 days"),
@@ -460,7 +460,7 @@ final class StrategyDataService: ObservableObject {
             longDescription: "Buying a put option for a stock you already own. This acts as insurance, capping your maximum potential loss if the stock price crashes.",
             category: .hedging,
             complexityLevel: 1,
-            marketOutlook: .bullish,
+            marketOutlook: .moderatelyBullish,
             riskProfile: OptionStrategy.RiskProfile(maxLoss: 500, maxProfit: nil, breakeven: [105.00], riskLevel: .low, profitProbability: 0.60),
             components: [
                 OptionStrategy.StrategyComponent(optionType: .stock, position: .long, strikeRelation: .atTheMoney, quantity: 100, expiration: "Current"),
@@ -518,7 +518,7 @@ final class StrategyDataService: ObservableObject {
             longDescription: "Buying a deep in-the-money long-term call (LEAPS) and selling short-term out-of-the-money calls against it. Mimics a covered call with much less capital.",
             category: .income,
             complexityLevel: 3,
-            marketOutlook: .bullish,
+            marketOutlook: .moderatelyBullish,
             riskProfile: OptionStrategy.RiskProfile(maxLoss: 1500, maxProfit: 300, breakeven: [85.00], riskLevel: .moderate, profitProbability: 0.60),
             components: [
                 OptionStrategy.StrategyComponent(optionType: .call, position: .long, strikeRelation: .inTheMoney, quantity: 1, expiration: "1-2 years"),
