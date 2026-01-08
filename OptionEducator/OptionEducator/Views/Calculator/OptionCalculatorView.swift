@@ -1,16 +1,15 @@
 import SwiftUI
 
-/// Interactive options pricing calculator supporting multi-leg strategies.
-///
-/// Allows users to input multiple option legs and calculate their combined
-/// theoretical price, break-even points, and profit/loss scenarios.
+/// Interactive options pricing calculator supporting multi-leg strategies and real-time market data.
 struct OptionCalculatorView: View {
     // MARK: - Environment
     
     @EnvironmentObject private var coordinator: AppCoordinator
+    @EnvironmentObject private var marketstack: MarketstackService
     
     // MARK: - State
     
+    @State private var symbol: String = ""
     @State private var stockPrice: String = "100"
     @State private var daysToExpiration: String = "30"
     @State private var volatility: String = "30"
@@ -48,6 +47,50 @@ struct OptionCalculatorView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                // Real-Time Data Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Real-World Simulation")
+                        .font(.headline)
+                    
+                    HStack(spacing: 12) {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Symbol (Stock/Index)")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+                            TextField("e.g. AAPL, SPX", text: $symbol)
+                                .textFieldStyle(.roundedBorder)
+                                .autocapitalization(.allCharacters)
+                                .disableAutocorrection(true)
+                        }
+                        
+                        Button(action: fetchPrice) {
+                            if marketstack.isLoading {
+                                ProgressView()
+                                    .padding(.horizontal, 12)
+                            } else {
+                                Text("Get Price")
+                                    .fontWeight(.semibold)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 8)
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(8)
+                            }
+                        }
+                        .disabled(symbol.isEmpty || marketstack.isLoading)
+                    }
+                    
+                    if let error = marketstack.errorMessage {
+                        Text(error)
+                            .font(.caption)
+                            .foregroundColor(.red)
+                    }
+                }
+                .padding()
+                .background(Color.blue.opacity(0.05))
+                .cornerRadius(12)
+                .padding(.horizontal)
+                
                 // Global Parameters
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Market Parameters")
@@ -145,9 +188,21 @@ struct OptionCalculatorView: View {
         .onChange(of: coordinator.prefilledStrategy) { _ in
             checkPrefilledStrategy()
         }
+        .onChange(of: marketstack.currentPrice) { newPrice in
+            if let price = newPrice {
+                stockPrice = String(format: "%.2f", price)
+                calculate()
+            }
+        }
     }
     
     // MARK: - Methods
+    
+    private func fetchPrice() {
+        Task {
+            await marketstack.fetchLatestPrice(for: symbol)
+        }
+    }
     
     private func addLeg() {
         legs.append(OptionLeg())
@@ -162,15 +217,12 @@ struct OptionCalculatorView: View {
     private func checkPrefilledStrategy() {
         guard let strategy = coordinator.prefilledStrategy else { return }
         
-        // Update legs based on strategy components
         legs = strategy.components.compactMap { component in
-            // Map strategy component to calculator leg
             var leg = OptionLeg()
             leg.type = component.optionType == .put ? .put : .call
             leg.position = component.position == .short ? .short : .long
             leg.quantity = "\(component.quantity)"
             
-            // Set strike price based on relation (simplified for demo)
             let currentS = Double(stockPrice) ?? 100.0
             switch component.strikeRelation {
             case .atTheMoney: leg.strikePrice = String(format: "%.0f", currentS)
@@ -182,10 +234,7 @@ struct OptionCalculatorView: View {
             return leg
         }
         
-        // Clear prefilled strategy after use
         coordinator.prefilledStrategy = nil
-        
-        // Auto-calculate
         calculate()
     }
     
@@ -203,7 +252,6 @@ struct OptionCalculatorView: View {
         let rateDecimal = r / 100.0
         let dividendDecimal = q / 100.0
         
-        // Calculate total strategy price (net debit/credit)
         totalStrategyPrice = 0
         for leg in legs {
             guard let K = Double(leg.strikePrice),
@@ -214,12 +262,8 @@ struct OptionCalculatorView: View {
             totalStrategyPrice += price * qty * multiplier
         }
         
-        // Generate P/L data points
         generatePLData(S: S)
-        
-        // Find breakevens (where P/L crosses zero)
         findBreakevens()
-        
         showResults = true
     }
     
@@ -238,7 +282,6 @@ struct OptionCalculatorView: View {
                 guard let K = Double(leg.strikePrice),
                       let qty = Double(leg.quantity) else { continue }
                 
-                // Calculate leg price at expiration
                 let valueAtExp: Double
                 if leg.type == .call {
                     valueAtExp = max(0, stockPriceAtExp - K)
@@ -246,7 +289,6 @@ struct OptionCalculatorView: View {
                     valueAtExp = max(0, K - stockPriceAtExp)
                 }
                 
-                // Calculate theoretical entry price for this leg
                 let entryPrice = blackScholes(S: S, K: K, T: Double(daysToExpiration)! / 365.0, sigma: Double(volatility)! / 100.0, r: Double(riskFreeRate)! / 100.0, q: Double(dividendYield)! / 100.0, type: leg.type)
                 
                 let multiplier = leg.position == .long ? 1.0 : -1.0
@@ -266,7 +308,6 @@ struct OptionCalculatorView: View {
             let p2 = plDataPoints[i+1]
             
             if (p1.profitLoss <= 0 && p2.profitLoss > 0) || (p1.profitLoss >= 0 && p2.profitLoss < 0) {
-                // Linear interpolation for more accurate breakeven
                 let fraction = abs(p1.profitLoss) / (abs(p1.profitLoss) + abs(p2.profitLoss))
                 let be = p1.stockPrice + fraction * (p2.stockPrice - p1.stockPrice)
                 bes.append(be)
@@ -306,7 +347,33 @@ struct OptionCalculatorView: View {
     }
 }
 
-// MARK: - Supporting Views
+// MARK: - Supporting Components
+
+/// Input field for calculator
+struct InputField: View {
+    let title: String
+    @Binding var value: String
+    let placeholder: String
+    let suffix: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+            
+            HStack {
+                TextField(placeholder, text: $value)
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(.roundedBorder)
+                
+                Text(suffix)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+}
 
 struct LegInputView: View {
     @Binding var leg: OptionCalculatorView.OptionLeg
@@ -343,34 +410,6 @@ struct LegInputView: View {
         .padding()
         .background(Color.gray.opacity(0.05))
         .cornerRadius(12)
-    }
-}
-
-// MARK: - Re-added Supporting Components
-
-/// Input field for calculator
-struct InputField: View {
-    let title: String
-    @Binding var value: String
-    let placeholder: String
-    let suffix: String
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline)
-                .fontWeight(.medium)
-            
-            HStack {
-                TextField(placeholder, text: $value)
-                    .keyboardType(.decimalPad)
-                    .textFieldStyle(.roundedBorder)
-                
-                Text(suffix)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-        }
     }
 }
 
