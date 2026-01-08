@@ -3,7 +3,7 @@ import SwiftUI
 /// Interactive options pricing calculator using Black-Scholes model.
 ///
 /// Allows users to input parameters and calculate theoretical option prices,
-/// break-even points, and profit/loss scenarios.
+/// break-even points, and profit/loss scenarios with visual charts.
 struct OptionCalculatorView: View {
     // MARK: - State
     
@@ -17,6 +17,8 @@ struct OptionCalculatorView: View {
     
     @State private var calculatedPrice: Double?
     @State private var showResults = false
+    @State private var plDataPoints: [PLDataPoint] = []
+    @State private var breakevenPrices: [Double] = []
     
     // MARK: - Types
     
@@ -87,7 +89,7 @@ struct OptionCalculatorView: View {
                 
                 // Calculate button
                 Button(action: calculate) {
-                    Text("Calculate")
+                    Text("Calculate & Visualize")
                         .font(.headline)
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity)
@@ -97,14 +99,25 @@ struct OptionCalculatorView: View {
                 }
                 .padding(.horizontal)
                 
-                // Results
+                // Results and Chart
                 if showResults, let price = calculatedPrice {
-                    ResultsView(
-                        optionType: optionType,
-                        price: price,
-                        stockPrice: Double(stockPrice) ?? 0,
-                        strikePrice: Double(strikePrice) ?? 0
-                    )
+                    VStack(spacing: 24) {
+                        // P/L Chart
+                        ProfitLossChartView(
+                            dataPoints: plDataPoints,
+                            currentPrice: Double(stockPrice) ?? 0,
+                            breakevenPrices: breakevenPrices
+                        )
+                        .padding(.horizontal)
+                        
+                        // Numeric Results
+                        ResultsView(
+                            optionType: optionType,
+                            price: price,
+                            stockPrice: Double(stockPrice) ?? 0,
+                            strikePrice: Double(strikePrice) ?? 0
+                        )
+                    }
                 }
                 
                 // Educational content
@@ -133,7 +146,7 @@ struct OptionCalculatorView: View {
         let dividendDecimal = q / 100.0
         
         // Calculate using Black-Scholes
-        calculatedPrice = blackScholes(
+        let price = blackScholes(
             S: S,
             K: K,
             T: timeToExpiration,
@@ -143,11 +156,51 @@ struct OptionCalculatorView: View {
             type: optionType
         )
         
+        calculatedPrice = price
+        
+        // Generate P/L data points for the chart
+        generatePLData(S: S, K: K, price: price)
+        
+        // Calculate breakeven
+        breakevenPrices = [optionType == .call ? K + price : K - price]
+        
         showResults = true
+    }
+    
+    private func generatePLData(S: Double, K: Double, price: Double) {
+        let range = S * 0.4 // Show 40% range around current price
+        let start = max(0, S - range)
+        let end = S + range
+        let step = (end - start) / 50.0
+        
+        var points: [PLDataPoint] = []
+        for i in 0...50 {
+            let stockPriceAtExp = start + Double(i) * step
+            let pl: Double
+            
+            switch optionType {
+            case .call:
+                pl = (max(0, stockPriceAtExp - K) - price) * 100.0 // 100 shares per contract
+            case .put:
+                pl = (max(0, K - stockPriceAtExp) - price) * 100.0
+            }
+            
+            points.append(PLDataPoint(stockPrice: stockPriceAtExp, profitLoss: pl))
+        }
+        
+        plDataPoints = points
     }
     
     /// Black-Scholes option pricing formula
     private func blackScholes(S: Double, K: Double, T: Double, sigma: Double, r: Double, q: Double, type: OptionType) -> Double {
+        // Handle T=0 case
+        if T <= 0 {
+            switch type {
+            case .call: return max(0, S - K)
+            case .put: return max(0, K - S)
+            }
+        }
+        
         let d1 = (log(S / K) + (r - q + 0.5 * sigma * sigma) * T) / (sigma * sqrt(T))
         let d2 = d1 - sigma * sqrt(T)
         
@@ -202,7 +255,7 @@ struct ResultsView: View {
     
     var body: some View {
         VStack(spacing: 16) {
-            Text("Results")
+            Text("Numeric Analysis")
                 .font(.headline)
             
             VStack(spacing: 12) {
@@ -224,6 +277,16 @@ struct ResultsView: View {
                 ResultRow(
                     label: "Break-Even",
                     value: String(format: "$%.2f", breakEven)
+                )
+                
+                ResultRow(
+                    label: "Max Profit",
+                    value: maxProfit
+                )
+                
+                ResultRow(
+                    label: "Max Loss",
+                    value: String(format: "$%.2f", price * 100.0)
                 )
             }
             .padding()
@@ -252,6 +315,15 @@ struct ResultsView: View {
             return strikePrice + price
         case .put:
             return strikePrice - price
+        }
+    }
+    
+    private var maxProfit: String {
+        switch optionType {
+        case .call:
+            return "Unlimited"
+        case .put:
+            return String(format: "$%.2f", (strikePrice - price) * 100.0)
         }
     }
 }
