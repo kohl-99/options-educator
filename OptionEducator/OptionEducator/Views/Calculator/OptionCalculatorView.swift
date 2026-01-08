@@ -345,3 +345,93 @@ struct LegInputView: View {
         .cornerRadius(12)
     }
 }
+
+// MARK: - Re-added Supporting Components
+
+/// Input field for calculator
+struct InputField: View {
+    let title: String
+    @Binding var value: String
+    let placeholder: String
+    let suffix: String
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline)
+                .fontWeight(.medium)
+            
+            HStack {
+                TextField(placeholder, text: $value)
+                    .keyboardType(.decimalPad)
+                    .textFieldStyle(.roundedBorder)
+                
+                Text(suffix)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+            }
+        }
+    }
+}
+
+/// Result row displaying label and value
+struct ResultRow: View {
+    let label: String
+    let value: String
+    
+    var body: some View {
+        HStack {
+            Text(label)
+                .font(.subheadline)
+            Spacer()
+            Text(value)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+        }
+    }
+}
+
+/// Educational section explaining the calculator
+struct EducationalSection: View {
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("About This Calculator")
+                .font(.headline)
+            
+            Text("This calculator uses the Black-Scholes model to estimate theoretical option prices. The model assumes:")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+            
+            VStack(alignment: .leading, spacing: 8) {
+                BulletPoint(text: "European-style options (exercise only at expiration)")
+                BulletPoint(text: "No dividends during the option's life (or constant dividend yield)")
+                BulletPoint(text: "Efficient markets with no transaction costs")
+                BulletPoint(text: "Constant volatility and risk-free rate")
+                BulletPoint(text: "Log-normal distribution of stock prices")
+            }
+            .font(.caption)
+            .foregroundColor(.secondary)
+            
+            Text("Note: Real-world options prices may differ due to market conditions, liquidity, and other factors not captured by the model.")
+                .font(.caption)
+                .foregroundColor(.orange)
+                .padding(.top, 8)
+        }
+        .padding()
+        .background(Color.gray.opacity(0.05))
+        .cornerRadius(12)
+        .padding(.horizontal)
+    }
+}
+
+/// Bullet point view
+struct BulletPoint: View {
+    let text: String
+    
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text("•")
+            Text(text)
+        }
+    }
+}
