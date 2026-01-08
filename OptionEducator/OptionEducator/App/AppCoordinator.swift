@@ -23,6 +23,9 @@ final class AppCoordinator: ObservableObject {
     /// The current sheet being presented, if any
     @Published var currentSheet: Sheet?
     
+    /// Pre-filled strategy for the calculator
+    @Published var prefilledStrategy: OptionStrategy?
+    
     // MARK: - Types
     
     /// Represents the main tabs in the application
@@ -112,6 +115,13 @@ final class AppCoordinator: ObservableObject {
     func switchTab(to tab: Tab) {
         selectedTab = tab
         popToRoot() // Clear navigation stack when switching tabs
+    }
+    
+    /// Switches to the calculator tab and pre-fills it with a strategy
+    /// - Parameter strategy: The strategy to pre-fill
+    func tryStrategy(_ strategy: OptionStrategy) {
+        prefilledStrategy = strategy
+        switchTab(to: .calculator)
     }
     
     /// Presents a modal sheet

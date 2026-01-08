@@ -8,6 +8,7 @@ struct StrategyDetailView: View {
     // MARK: - Environment
     
     @EnvironmentObject private var strategyService: StrategyDataService
+    @EnvironmentObject private var coordinator: AppCoordinator
     @Environment(\.dismiss) private var dismiss
     
     // MARK: - Properties
@@ -27,6 +28,22 @@ struct StrategyDetailView: View {
                     VStack(alignment: .leading, spacing: 24) {
                         // Header Section
                         headerSection(strategy)
+                        
+                        // Try Strategy Button
+                        Button(action: {
+                            coordinator.tryStrategy(strategy)
+                        }) {
+                            HStack {
+                                Image(systemName: "play.circle.fill")
+                                Text("Try This Strategy")
+                                    .fontWeight(.bold)
+                            }
+                            .frame(maxWidth: .infinity)
+                            .padding()
+                            .background(Color.blue)
+                            .foregroundColor(.white)
+                            .cornerRadius(12)
+                        }
                         
                         Divider()
                         
