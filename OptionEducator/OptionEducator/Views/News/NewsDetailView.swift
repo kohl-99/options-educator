@@ -1,387 +1,160 @@
 import SwiftUI
 
-/// Detailed view for a news article with strategy suggestions.
-///
-/// Displays the full article content, related symbols, sentiment analysis,
-/// and educational strategy suggestions based on the news type.
+/// A detailed view for a news article, featuring sentiment analysis and stock impact.
 struct NewsDetailView: View {
-    // MARK: - Environment
-    
-    @EnvironmentObject private var newsService: NewsService
-    @EnvironmentObject private var coordinator: AppCoordinator
-    @Environment(\.dismiss) private var dismiss
-    @Environment(\.openURL) private var openURL
-    
-    // MARK: - Properties
-    
-    let newsId: String
-    
-    // MARK: - State
-    
-    @State private var article: NewsArticle?
-    
-    // MARK: - Body
+    let article: MediastackArticle
     
     var body: some View {
-        Group {
-            if let article = article {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 24) {
-                        // Header
-                        headerSection(article)
-                        
-                        Divider()
-                        
-                        // Article Content
-                        contentSection(article)
-                        
-                        // Related Symbols
-                        if !article.relatedSymbols.isEmpty {
-                            symbolsSection(article)
-                        }
-                        
-                        // Sentiment
-                        if let sentiment = article.sentiment {
-                            sentimentSection(sentiment)
-                        }
-                        
-                        // Strategy Suggestions
-                        if !article.suggestedStrategies.isEmpty {
-                            strategySuggestionsSection(article)
-                        }
-                        
-                        // Historical Context
-                        if let context = article.historicalContext {
-                            historicalContextSection(context)
-                        }
-                        
-                        // Source Link
-                        sourceLinkSection(article)
-                    }
-                    .padding()
-                }
-                .navigationTitle("News Detail")
-                .navigationBarTitleDisplayMode(.inline)
-            } else {
-                ContentUnavailableView(
-                    "Article Not Found",
-                    systemImage: "exclamationmark.triangle",
-                    description: Text("The requested article could not be loaded.")
-                )
-            }
-        }
-        .onAppear {
-            loadArticle()
-        }
-    }
-    
-    // MARK: - View Components
-    
-    private func headerSection(_ article: NewsArticle) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Category and Breaking Badge
-            HStack {
-                CategoryBadge(category: article.category)
-                
-                if article.isBreaking {
-                    Text("BREAKING")
-                        .font(.caption2)
+        let analysis = SentimentAnalysisService.analyze(article)
+        
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                // Header Section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(article.source)
+                        .font(.subheadline)
                         .fontWeight(.bold)
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 6)
-                        .padding(.vertical, 2)
-                        .background(Color.red)
-                        .cornerRadius(4)
-                }
-                
-                Spacer()
-            }
-            
-            // Headline
-            Text(article.headline)
-                .font(.title2)
-                .fontWeight(.bold)
-            
-            // Metadata
-            HStack {
-                Text(article.source.name)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-                
-                Text("•")
-                    .foregroundColor(.secondary)
-                
-                Text(article.relativeTimeString)
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
-            }
-        }
-    }
-    
-    private func contentSection(_ article: NewsArticle) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Summary")
-                .font(.headline)
-            
-            Text(article.summary)
-                .font(.body)
-            
-            if let content = article.content {
-                Text("Full Article")
-                    .font(.headline)
-                    .padding(.top, 8)
-                
-                Text(content)
-                    .font(.body)
-            }
-        }
-    }
-    
-    private func symbolsSection(_ article: NewsArticle) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Related Symbols")
-                .font(.headline)
-            
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 12) {
-                    ForEach(article.relatedSymbols, id: \.self) { symbol in
-                        SymbolChip(symbol: symbol)
-                    }
-                }
-            }
-        }
-    }
-    
-    private func sentimentSection(_ sentiment: NewsArticle.Sentiment) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Market Sentiment")
-                .font(.headline)
-            
-            HStack {
-                Image(systemName: sentiment.iconName)
-                    .font(.title2)
-                    .foregroundColor(sentimentColor(sentiment))
-                
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(sentiment.rawValue)
-                        .font(.title3)
-                        .fontWeight(.semibold)
-                        .foregroundColor(sentimentColor(sentiment))
+                        .foregroundColor(.blue)
                     
-                    Text(sentimentDescription(sentiment))
+                    Text(article.title)
+                        .font(.title2)
+                        .fontWeight(.bold)
+                    
+                    Text("Published on \(formatDate(article.published_at))")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }
                 
-                Spacer()
-            }
-            .padding()
-            .background(sentimentColor(sentiment).opacity(0.1))
-            .cornerRadius(12)
-        }
-    }
-    
-    private func strategySuggestionsSection(_ article: NewsArticle) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Strategy Suggestions")
-                .font(.headline)
-            
-            Text("Based on this type of news event, here are some educational examples of how options traders might respond:")
-                .font(.caption)
-                .foregroundColor(.secondary)
-            
-            ForEach(article.suggestedStrategies) { suggestion in
-                StrategySuggestionCard(suggestion: suggestion)
-            }
-        }
-    }
-    
-    private func historicalContextSection(_ context: String) -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                Image(systemName: "clock.arrow.circlepath")
-                    .foregroundColor(.blue)
-                Text("Historical Context")
-                    .font(.headline)
-            }
-            
-            Text(context)
-                .font(.subheadline)
-                .foregroundColor(.secondary)
-        }
-        .padding()
-        .background(Color.blue.opacity(0.05))
-        .cornerRadius(12)
-    }
-    
-    private func sourceLinkSection(_ article: NewsArticle) -> some View {
-        Button {
-            if let url = URL(string: article.url) {
-                openURL(url)
-            }
-        } label: {
-            HStack {
-                Image(systemName: "link")
-                Text("Read Full Article on \(article.source.name)")
-                Spacer()
-                Image(systemName: "arrow.up.right")
-            }
-            .font(.subheadline)
-            .foregroundColor(.blue)
-            .padding()
-            .background(Color.blue.opacity(0.1))
-            .cornerRadius(12)
-        }
-    }
-    
-    // MARK: - Helper Methods
-    
-    private func loadArticle() {
-        article = newsService.article(withId: newsId)
-    }
-    
-    private func sentimentColor(_ sentiment: NewsArticle.Sentiment) -> Color {
-        switch sentiment {
-        case .positive: return .green
-        case .neutral: return .gray
-        case .negative: return .red
-        }
-    }
-    
-    private func sentimentDescription(_ sentiment: NewsArticle.Sentiment) -> String {
-        switch sentiment {
-        case .positive:
-            return "This news is generally viewed as positive for the stock"
-        case .neutral:
-            return "This news has mixed or uncertain implications"
-        case .negative:
-            return "This news is generally viewed as negative for the stock"
-        }
-    }
-}
-
-// MARK: - Supporting Views
-
-struct SymbolChip: View {
-    let symbol: String
-    
-    var body: some View {
-        Text(symbol)
-            .font(.subheadline)
-            .fontWeight(.semibold)
-            .padding(.horizontal, 16)
-            .padding(.vertical, 8)
-            .background(Color.blue.opacity(0.1))
-            .foregroundColor(.blue)
-            .cornerRadius(20)
-    }
-}
-
-struct StrategySuggestionCard: View {
-    let suggestion: NewsArticle.StrategySuggestion
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            // Header
-            HStack {
-                Image(systemName: "lightbulb.fill")
-                    .foregroundColor(.yellow)
-                
-                Text(suggestion.strategyName)
-                    .font(.headline)
-                
-                Spacer()
-                
-                ConfidenceMeter(confidence: suggestion.confidence)
-            }
-            
-            // Rationale
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Rationale")
-                    .font(.caption)
-                    .fontWeight(.semibold)
+                // Sentiment Analysis Section
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("Market Sentiment")
+                            .font(.headline)
+                        Spacer()
+                        SentimentBadge(sentiment: analysis.sentiment)
+                    }
+                    
+                    Text(analysis.reasoning)
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                    
+                    // Sentiment Meter
+                    GeometryReader { geo in
+                        ZStack(alignment: .leading) {
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(Color.gray.opacity(0.2))
+                                .frame(height: 8)
+                            
+                            RoundedRectangle(cornerRadius: 4)
+                                .fill(sentimentColor(analysis.sentiment))
+                                .frame(width: geo.size.width * CGFloat((analysis.score + 1.0) / 2.0), height: 8)
+                        }
+                    }
+                    .frame(height: 8)
+                    
+                    HStack {
+                        Text("Bearish")
+                        Spacer()
+                        Text("Neutral")
+                        Spacer()
+                        Text("Bullish")
+                    }
+                    .font(.caption2)
                     .foregroundColor(.secondary)
+                }
+                .padding()
+                .background(Color.gray.opacity(0.05))
+                .cornerRadius(12)
                 
-                Text(suggestion.rationale)
-                    .font(.subheadline)
-            }
-            
-            // Details Grid
-            VStack(spacing: 8) {
-                DetailRow(label: "Timing", value: suggestion.timing, icon: "clock")
-                DetailRow(label: "Risk Level", value: suggestion.riskLevel, icon: "exclamationmark.triangle")
-                DetailRow(label: "Expected Outcome", value: suggestion.expectedOutcome, icon: "target")
-            }
-            
-            // Platform Availability
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Available On")
-                    .font(.caption)
-                    .fontWeight(.semibold)
-                    .foregroundColor(.secondary)
-                
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(suggestion.platformAvailability, id: \.self) { platform in
-                            Text(platform)
-                                .font(.caption)
-                                .padding(.horizontal, 8)
-                                .padding(.vertical, 4)
-                                .background(Color.green.opacity(0.1))
-                                .foregroundColor(.green)
-                                .cornerRadius(6)
+                // Stock Impact Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Potential Stock Impact")
+                        .font(.headline)
+                    
+                    if analysis.affectedStocks.isEmpty {
+                        Text("No specific stocks identified in this article. The impact may be broader across the \(article.category) sector.")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                    } else {
+                        HStack(spacing: 8) {
+                            ForEach(analysis.affectedStocks, id: \.self) { stock in
+                                Text(stock)
+                                    .font(.caption)
+                                    .fontWeight(.bold)
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 6)
+                                    .background(Color.blue.opacity(0.1))
+                                    .foregroundColor(.blue)
+                                    .cornerRadius(20)
+                            }
                         }
                     }
                 }
+                
+                // Strategy Suggestions
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Recommended Strategies")
+                        .font(.headline)
+                    
+                    ForEach(suggestedStrategies(for: analysis.sentiment), id: \.self) { strategy in
+                        HStack {
+                            Image(systemName: "lightbulb.fill")
+                                .foregroundColor(.orange)
+                            Text(strategy)
+                                .font(.subheadline)
+                        }
+                        .padding(.vertical, 4)
+                    }
+                }
+                
+                // Article Content
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Article Summary")
+                        .font(.headline)
+                    
+                    Text(article.description ?? "No description available.")
+                        .font(.body)
+                        .foregroundColor(.primary)
+                    
+                    if let url = URL(string: article.url) {
+                        Link(destination: url) {
+                            Text("Read Full Article on \(article.source)")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding()
+                                .background(Color.blue)
+                                .cornerRadius(12)
+                        }
+                        .padding(.top, 12)
+                    }
+                }
             }
-            
-            // Disclaimer
-            Text("⚠️ This is educational content only. Always conduct your own research and consider your risk tolerance before trading.")
-                .font(.caption2)
-                .foregroundColor(.orange)
-                .padding(.top, 4)
+            .padding()
         }
-        .padding()
-        .background(Color.yellow.opacity(0.05))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
-        )
+        .navigationBarTitleDisplayMode(.inline)
     }
-}
-
-struct DetailRow: View {
-    let label: String
-    let value: String
-    let icon: String
     
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(systemName: icon)
-                .font(.caption)
-                .foregroundColor(.blue)
-                .frame(width: 20)
-            
-            VStack(alignment: .leading, spacing: 2) {
-                Text(label)
-                    .font(.caption)
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
-                Text(value)
-                    .font(.caption)
-            }
-        }
-        .padding(.vertical, 4)
+    private func formatDate(_ dateString: String) -> String {
+        return String(dateString.prefix(10))
     }
-}
-
-// MARK: - Preview
-
-#Preview {
-    NavigationStack {
-        NewsDetailView(newsId: "news-001")
-            .environmentObject(NewsService())
-            .environmentObject(AppCoordinator())
+    
+    private func sentimentColor(_ sentiment: SentimentAnalysisService.Sentiment) -> Color {
+        switch sentiment {
+        case .bullish: return .green
+        case .bearish: return .red
+        case .neutral: return .gray
+        }
+    }
+    
+    private func suggestedStrategies(for sentiment: SentimentAnalysisService.Sentiment) -> [String] {
+        switch sentiment {
+        case .bullish:
+            return ["Bull Call Spread", "Long Call", "Cash-Secured Put"]
+        case .bearish:
+            return ["Bear Put Spread", "Long Put", "Covered Call"]
+        case .neutral:
+            return ["Iron Condor", "Iron Butterfly", "Calendar Spread"]
+        }
     }
 }

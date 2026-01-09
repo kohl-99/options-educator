@@ -15,6 +15,7 @@ struct OptionEducatorApp: App {
     @StateObject private var strategyDataService = StrategyDataService()
     @StateObject private var platformDataService = PlatformDataService()
     @StateObject private var newsService = NewsService()
+    @StateObject private var mediastackService = MediastackService()
     @StateObject private var marketstackService = MarketstackService()
     
     // MARK: - Body
@@ -26,6 +27,7 @@ struct OptionEducatorApp: App {
                 .environmentObject(strategyDataService)
                 .environmentObject(platformDataService)
                 .environmentObject(newsService)
+                .environmentObject(mediastackService)
                 .environmentObject(marketstackService)
                 .onAppear {
                     setupApp()
