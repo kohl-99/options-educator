@@ -149,9 +149,19 @@ struct OptionCalculatorView: View {
                         )
                         .padding(.horizontal)
                         
-                        // Strategy Summary
+                        // Beginner Risk Analysis
+                        BeginnerRiskAnalysisView(
+                            maxProfit: plDataPoints.map { $0.profitLoss }.max() ?? 0,
+                            maxLoss: abs(plDataPoints.map { $0.profitLoss }.min() ?? 0),
+                            breakevens: breakevenPrices,
+                            currentPrice: Double(stockPrice) ?? 0,
+                            strategyName: coordinator.prefilledStrategy?.name ?? "Custom Strategy"
+                        )
+                        .padding(.horizontal)
+                        
+                        // Technical Summary
                         VStack(spacing: 16) {
-                            Text("Strategy Summary")
+                            Text("Technical Summary")
                                 .font(.headline)
                             
                             VStack(spacing: 12) {
